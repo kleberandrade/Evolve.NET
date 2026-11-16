@@ -27,4 +27,6 @@ dotnet list Evolve.NET.sln package --vulnerable --include-transitive
 
 ## Validation limits
 
-The workflow is configured for Linux, macOS, and Windows, but hosted CI has not been executed locally or remotely during this upgrade. Only macOS ARM64 execution was verified. The terrain example uses a fitness heuristic and has no physics/playability verification. Randomness is shared process-wide, so reproducibility checks apply to serial runs on the same runtime. No push, package publication, or hosted deployment was performed.
+The initial local checks above covered macOS ARM64. After publishing implementation commit `e5cd6b6dcb04d25c6ec3cc0e3f169df1b9081479`, [GitHub Actions run 43789621646](https://github.com/kleberandrade/Evolve.NET/actions/runs/43789621646) also passed on Linux (`ubuntu-latest`), macOS (`macos-latest`), and Windows (`windows-latest`). Each job completed locked restore, Release build, all regression tests, and both complete examples.
+
+The terrain example uses a fitness heuristic and has no physics/playability verification. Randomness is shared process-wide, so reproducibility checks apply to serial runs on the same runtime. No package publication or hosted deployment was performed.

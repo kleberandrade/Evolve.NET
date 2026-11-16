@@ -84,7 +84,7 @@ dotnet test --solution Evolve.NET.sln -c Release
 
 Regression tests cover fitness-preserving selection, roulette with zero/negative fitness, crossover and mutation boundaries, chromosome equality and copying, generation size, full/partial elitism, minimization, reproducible seeds, invariant statistics, invalid inputs, and both sample fitness functions. Tests run serially because the random stream is shared. The NuGet lock file pins test dependencies.
 
-The GitHub Actions workflow builds, tests, and runs both examples on Linux, macOS, and Windows. Local validation was performed with SDK 10.0.404 on macOS ARM64; hosted CI requires pushing this commit and has not been run as part of the local upgrade. See the [local validation record](docs/validation.md) for commands, results, and limits.
+The GitHub Actions workflow builds, tests, and runs both examples on Linux, macOS, and Windows. All three platforms passed the [implementation validation run](https://github.com/kleberandrade/Evolve.NET/actions/runs/43789621646). Local validation was performed with SDK 10.0.404 on macOS ARM64. See the [validation record](docs/validation.md) for commands, results, and limits.
 
 ## License
 
