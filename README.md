@@ -1,5 +1,11 @@
 # Evolve.NET
 
+[![C#](https://img.shields.io/badge/language-C%23-239120)](https://learn.microsoft.com/en-us/dotnet/csharp/)
+[![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+[![xUnit.net v3](https://img.shields.io/badge/tests-xUnit.net_v3-5E2CA5)](https://xunit.net/)
+[![.NET validation](https://github.com/kleberandrade/Evolve.NET/actions/workflows/dotnet.yml/badge.svg?branch=master)](https://github.com/kleberandrade/Evolve.NET/actions/workflows/dotnet.yml?query=branch%3Amaster)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A small C# evolutionary algorithm library with integer chromosomes, tournament and roulette selection, one-point crossover, resetting mutation, and elitism. Includes runnable binary optimization and terrain generation examples.
 
 ## Requirements
