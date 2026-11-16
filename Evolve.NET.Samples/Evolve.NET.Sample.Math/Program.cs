@@ -1,40 +1,36 @@
-﻿using Evolve.NET.Core;
+using Evolve.NET.Core;
 using Evolve.NET.Core.CrossoverMethods;
 using Evolve.NET.Core.MutationMethods;
-using System;
 
-namespace Evolve.NET.Sample.Math
+namespace Evolve.NET.Sample.Math;
+
+public class Program
 {
-    public class Program
+    public static int Main(string[] args)
     {
-        public static void Main(string[] args)
+        int seed = 10;
+        int generations = 200;
+        if (args.Length > 3 || (args.Length > 0 && !int.TryParse(args[0], out seed)) ||
+            (args.Length > 1 && (!int.TryParse(args[1], out generations) || generations < 0)))
         {
-            const int POPULATION_SIZE = 200;
-            const int CHROMOSOME_SIZE = 16;
-            const int GENE_MIN = 0;
-            const int GENE_MAX = 1;
-            const int MAX_GENERATIONS = 200;
-            const int ELITIMS_NUMBER = 3;
-            const int TOURNAMENT_NUMBER = 3;
-            const double CROSSOVER_RATE = 0.8;
-            const double MUTATION_RATE = 0.02;
-            const string FILENAME = "sample_result.xls";
-
-            GeneticAlgorithm<int> simulator = new GeneticAlgorithm<int>
-            {
-                Selection = new TournamentSelection<int>(TOURNAMENT_NUMBER),
-                Crossover = new OnePointCrossoverOperator<int>(CROSSOVER_RATE),
-                Mutation = new ResetingRandomMutationOperator<int>(MUTATION_RATE),
-                Fitness = new FitnessFunction<int>(),
-                Elitism = ELITIMS_NUMBER,
-                Filename = FILENAME,
-                Debug = new ConsoleDebug<int>(),
-                DebugMask = DebugMask.First | DebugMask.Step
-            };
-
-            simulator.Simulate(POPULATION_SIZE, CHROMOSOME_SIZE, GENE_MIN, GENE_MAX, MAX_GENERATIONS);
-
-            Console.ReadKey();
+            Console.Error.WriteLine("Usage: dotnet run --project Evolve.NET.Samples/Evolve.NET.Sample.Math -- [seed] [generations >= 0] [output.tsv]");
+            return 1;
         }
+        string output = args.Length > 2 ? args[2] : "math-results.tsv";
+        var simulator = new GeneticAlgorithm<int>
+        {
+            Seed = seed,
+            Selection = new TournamentSelection<int>(3),
+            Crossover = new OnePointCrossoverOperator<int>(0.8),
+            Mutation = new ResetingRandomMutationOperator<int>(0.02),
+            Fitness = new FitnessFunction<int>(),
+            Elitism = 3,
+            Filename = output,
+            Debug = new ConsoleDebug<int>(),
+            DebugMask = DebugMask.Last
+        };
+        simulator.Simulate(200, 16, 0, 1, generations);
+        Console.WriteLine($"Seed: {seed}; statistics: {output}");
+        return 0;
     }
 }

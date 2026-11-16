@@ -1,25 +1,19 @@
-﻿using Evolve.NET.Core;
-using System;
+using Evolve.NET.Core;
 
-namespace Evolve.NET.Sample.Math
+namespace Evolve.NET.Sample.Math;
+
+public class ConsoleDebug<T> : IDebug<T>
 {
-    public class ConsoleDebug<T> : IDebug<T>
+    public void Log(IPopulation<T> population)
     {
-        public void Log(IPopulation<T> population)
-        {
-            for (int i = 0; i < population.Count; i++)
-            {
-                Console.Write("Generation {0}\t", population.Generation);
-                Log(population[i]);
-                Console.WriteLine("\tFitness {0}", population[i].Fitness);                
-            }
+        var best = Enumerable.Range(0, population.Count).Select(i => population[i])
+            .OrderBy(c => c, population[0].Comparer).First();
+        Console.WriteLine($"Generation {population.Generation}; best fitness: {best.Fitness}");
+        Log(best);
+    }
 
-            Console.WriteLine();
-        }
-
-        public void Log(IChromosome<T> chromosome)
-        {
-            Console.Write("{0}", chromosome.ToString());
-        }
+    public void Log(IChromosome<T> chromosome)
+    {
+        Console.WriteLine(chromosome);
     }
 }

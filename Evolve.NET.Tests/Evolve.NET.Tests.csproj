@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="4.0.3" />
+    <ProjectReference Include="../Evolve.NET.Core/Evolve.NET.Core.csproj" />
+    <ProjectReference Include="../Evolve.NET.Samples/Evolve.NET.Sample.Math/Evolve.NET.Sample.Math.csproj" />
+    <ProjectReference Include="../Evolve.NET.Samples/Evolve.NET.Sample.LevelGenerator/Evolve.NET.Sample.LevelGenerator.csproj" />
+  </ItemGroup>
+</Project>

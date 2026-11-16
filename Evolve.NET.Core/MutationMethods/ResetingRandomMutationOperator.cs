@@ -1,21 +1,20 @@
-﻿namespace Evolve.NET.Core.MutationMethods
+namespace Evolve.NET.Core.MutationMethods;
+
+public class ResetingRandomMutationOperator<T> : IMutation<T>
 {
-    public class ResetingRandomMutationOperator<T> : IMutation<T>
+    private readonly double mutateRate;
+    public ResetingRandomMutationOperator(double mutateRate)
     {
-        private double m_MutateRate;
+        RandomHelper.ValidateRate(mutateRate);
+        this.mutateRate = mutateRate;
+    }
 
-        public ResetingRandomMutationOperator(double mutateRate)
-        {
-            m_MutateRate = mutateRate;
-        }
-
-        public void Mutate(ref IChromosome<T> chromosome, int min, int max)
-        {
-            if (RandomHelper.RandomDouble() < m_MutateRate)
-            {
-                int index = RandomHelper.RandomInt(0, chromosome.Length - 1);
-                chromosome[index] = (T)(object)RandomHelper.RandomInt(min, max);
-            }
-        }
+    // Probability is per chromosome; at most one gene is reset per call.
+    public void Mutate(ref IChromosome<T> chromosome, int min, int max)
+    {
+        ArgumentNullException.ThrowIfNull(chromosome);
+        RandomHelper.ValidateIntegerGenes<T>(min, max);
+        if (RandomHelper.RandomDouble() < mutateRate)
+            chromosome[RandomHelper.RandomInt(0, chromosome.Length - 1)] = (T)(object)RandomHelper.RandomInt(min, max);
     }
 }

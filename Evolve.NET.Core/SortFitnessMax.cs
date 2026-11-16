@@ -1,12 +1,12 @@
-﻿namespace Evolve.NET.Core
+namespace Evolve.NET.Core;
+
+public class SortFitnessMax<T> : ISortFitnessComparer<T>
 {
-    public class SortFitnessMax<T> : ISortFitnessComparer<T>
+    public int Compare(IChromosome<T>? x, IChromosome<T>? y)
     {
-        public int Compare(IChromosome<T> x, IChromosome<T> y)
-        {
-            if (x.Fitness > y.Fitness) return -1;
-            if (x.Fitness < y.Fitness) return 1;
-            return 0;
-        }
+        if (ReferenceEquals(x, y)) return 0;
+        if (x is null) return 1;
+        if (y is null) return -1;
+        return y.Fitness.CompareTo(x.Fitness);
     }
 }

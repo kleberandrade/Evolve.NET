@@ -1,29 +1,38 @@
-﻿using System;
+namespace Evolve.NET.Core;
 
-namespace Evolve.NET.Core
+public static class RandomHelper
 {
-    public static class RandomHelper
+    private static Random random = new(10);
+    private static readonly object sync = new();
+
+    // This stream is shared. Reset only between simulations, not during a run.
+    public static void SetSeed(int seed)
     {
-        private static readonly int RANDOM_SEED = 10;
+        lock (sync) random = new Random(seed);
+    }
 
-        private static Random m_Random = null;
+    // Both bounds are inclusive, including int.MaxValue.
+    public static int RandomInt(int min, int max)
+    {
+        if (min > max) throw new ArgumentOutOfRangeException(nameof(max));
+        lock (sync) return (int)random.NextInt64(min, (long)max + 1);
+    }
 
-        private static void InitializeRandom()
-        {
-            if (m_Random == null)
-                m_Random = new Random(RANDOM_SEED);
-        }
+    public static double RandomDouble()
+    {
+        lock (sync) return random.NextDouble();
+    }
 
-        public static int RandomInt(int min, int max)
-        {
-            InitializeRandom();
-            return m_Random.Next(min, max + 1);
-        }
+    internal static void ValidateIntegerGenes<T>(int min, int max)
+    {
+        if (typeof(T) != typeof(int))
+            throw new NotSupportedException("Integer initialization and resetting mutation require T = int. Use the array constructor and custom operators for other gene types.");
+        if (min > max) throw new ArgumentOutOfRangeException(nameof(max));
+    }
 
-        public static double RandomDouble()
-        {
-            InitializeRandom();
-            return m_Random.NextDouble();
-        }
+    internal static void ValidateRate(double rate)
+    {
+        if (!double.IsFinite(rate) || rate < 0 || rate > 1)
+            throw new ArgumentOutOfRangeException(nameof(rate), "Probability must be between 0 and 1.");
     }
 }

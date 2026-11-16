@@ -1,113 +1,75 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+using System.Globalization;
 
-namespace Evolve.NET.Core
+namespace Evolve.NET.Core;
+
+public class Population<T> : IPopulation<T>
 {
-    public class Population<T> : IPopulation<T>
+    private List<IChromosome<T>> chromosomes;
+    private readonly List<IChromosome<T>> next = new();
+
+    public IChromosome<T> this[int index]
     {
-        private List<IChromosome<T>> m_Chromosomes;
+        get => chromosomes[index];
+        set => chromosomes[index] = value ?? throw new ArgumentNullException(nameof(value));
+    }
+    public int Count => chromosomes.Count;
+    public int Generation { get; private set; }
+    public bool IsFullNewGeneration => next.Count == Count;
 
-        private List<IChromosome<T>> m_TempChromosomes;
+    public Population(int count, int length, int min, int max, ISortFitnessComparer<T>? comparer = null)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+        chromosomes = new List<IChromosome<T>>(count);
+        for (int i = 0; i < count; i++)
+            chromosomes.Add(new Chromosome<T>(length, min, max) { Comparer = comparer ?? new SortFitnessMax<T>() });
+    }
 
-        public IChromosome<T> this[int index]
-        {
-            get { return m_Chromosomes[index]; }
-            set { m_Chromosomes[index] = value; }
-        }
+    public Population(IEnumerable<IChromosome<T>> chromosomes)
+    {
+        ArgumentNullException.ThrowIfNull(chromosomes);
+        this.chromosomes = chromosomes.Select(c => (IChromosome<T>)new Chromosome<T>(c)).ToList();
+        if (Count == 0) throw new ArgumentException("Population cannot be empty.", nameof(chromosomes));
+    }
 
-        public int Count
-        {
-            get { return m_Chromosomes.Count; }
-        }
+    public Population(string fileName) => throw new NotSupportedException("Statistics files do not contain genes and cannot restore a population.");
 
-        public int Generation { get; private set; }
+    public void AddChromosomeInNewPopulation(IChromosome<T> chromosome)
+    {
+        ArgumentNullException.ThrowIfNull(chromosome);
+        if (!IsFullNewGeneration) next.Add(chromosome);
+    }
 
-        public bool IsFullNewGeneration
-        {
-            get { return m_TempChromosomes != null && m_TempChromosomes.Count == Count; }
-        }
+    public void SwapGeneration()
+    {
+        if (!IsFullNewGeneration) throw new InvalidOperationException("The next generation must be full before swapping.");
+        chromosomes = new List<IChromosome<T>>(next);
+        next.Clear();
+        Generation++;
+    }
 
-        public void AddChromosomeInNewPopulation(IChromosome<T> chromosome)
-        {
-            if (m_TempChromosomes == null)
-                m_TempChromosomes = new List<IChromosome<T>>();
+    public void Evaluate(IFitness<T> fitnessFunction)
+    {
+        ArgumentNullException.ThrowIfNull(fitnessFunction);
+        foreach (var chromosome in chromosomes) chromosome.EvaluateFitness(fitnessFunction);
+    }
 
-            if (IsFullNewGeneration)
-                return;
+    public void Elite(int elitismNumber)
+    {
+        if (elitismNumber < 0 || elitismNumber > Count) throw new ArgumentOutOfRangeException(nameof(elitismNumber));
+        var sorted = new List<IChromosome<T>>(chromosomes);
+        sorted.Sort(chromosomes[0].Comparer);
+        for (int i = 0; i < elitismNumber; i++) AddChromosomeInNewPopulation(new Chromosome<T>(sorted[i]));
+    }
 
-            m_TempChromosomes.Add(chromosome);
-        }
-
-        private void Load(string fileName)
-        {
-
-        }
-
-        public void Save(string filename, bool append)
-        {
-            using (StreamWriter outputFile = new StreamWriter(filename, append))
-            {
-                double best = 0;
-                double average = 0;
-
-                for (int i = 0; i < m_Chromosomes.Count; i++)
-                {
-                    average += m_Chromosomes[i].Fitness;
-
-                    if (best < m_Chromosomes[i].Fitness)
-                        best = m_Chromosomes[i].Fitness;
-                }
-
-                average /= (double)m_Chromosomes.Count;
-
-                outputFile.WriteLine("{0}\t{1}", average, best);
-            }
-        }
-
-        public void Elite(int elitismNumber)
-        {
-            if (elitismNumber <= 0)
-                return;
-
-            List<IChromosome<T>> chromosomes = new List<IChromosome<T>>(m_Chromosomes);
-            chromosomes.Sort();
-
-            for (int i = 0; i < elitismNumber; i++)
-                AddChromosomeInNewPopulation(chromosomes[i]);
-        }
-
-        public void SwapGeneration()
-        {
-            Generation++;
-            m_Chromosomes = new List<IChromosome<T>>(m_TempChromosomes);
-            m_TempChromosomes = null;
-        }
-
-        public void Evaluate(IFitness<T> fitnessFunction)
-        {
-            foreach (IChromosome<T> chromosome in m_Chromosomes)
-                chromosome.EvaluateFitness(fitnessFunction);
-
-            //m_Chromosomes.Sort();
-        }
-
-        public Population(string fileName)
-        {
-            Load(fileName);
-        }
-
-        public Population(int count, int length, int min, int max)
-        {
-            Generation = 0;
-
-            List<IChromosome<T>> temp = new List<IChromosome<T>>();
-            while (temp.Count < count)
-            {
-                temp.Add(new Chromosome<T>(length, min, max));
-            }
-
-            m_Chromosomes = new List<IChromosome<T>>(temp);
-        }
+    public void Save(string filename, bool append)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filename);
+        var best = chromosomes[0];
+        foreach (var candidate in chromosomes)
+            if (best.Comparer.Compare(candidate, best) < 0) best = candidate;
+        // Divide first to avoid overflowing when summing large finite fitness values.
+        double average = chromosomes.Sum(c => c.Fitness / Count);
+        using var output = new StreamWriter(filename, append);
+        output.WriteLine(string.Create(CultureInfo.InvariantCulture, $"{average:R}\t{best.Fitness:R}"));
     }
 }

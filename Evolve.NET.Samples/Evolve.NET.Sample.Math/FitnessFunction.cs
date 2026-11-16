@@ -1,25 +1,19 @@
-﻿using Evolve.NET.Core;
+using Evolve.NET.Core;
 
-namespace Evolve.NET.Sample.Math
+namespace Evolve.NET.Sample.Math;
+
+public class FitnessFunction<T> : IFitness<T>
 {
-    public class FitnessFunction<T> : IFitness<T>
+    public double Evaluate(IChromosome<T> chromosome)
     {
-        public double Evaluate(IChromosome<T> chromosome)
+        if (chromosome.Length > 31) throw new ArgumentException("This example supports at most 31 binary genes.");
+        long value = 0;
+        foreach (T gene in chromosome.Genes)
         {
-            return System.Math.Pow(ConvertArrayToDecimal(chromosome.Genes), 2);
+            if (gene is not int bit || (bit != 0 && bit != 1))
+                throw new ArgumentException("This example requires integer binary genes.");
+            value = value * 2 + bit;
         }
-
-        private long ConvertArrayToDecimal(T[] genes)
-        {
-            long value = 0;
-
-            for (int i = 0; i < genes.Length; i++)
-            {
-                long exp = genes.Length - i - 1;
-                value += (long)System.Math.Pow(2, exp) * (int)(object)genes[i];
-            }
-
-            return value;
-        }
+        return (double)value * value;
     }
 }

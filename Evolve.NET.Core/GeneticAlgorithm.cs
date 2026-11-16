@@ -1,72 +1,55 @@
-﻿using Evolve.NET.Core.CrossoverMethods;
+using Evolve.NET.Core.CrossoverMethods;
 using Evolve.NET.Core.MutationMethods;
 
-namespace Evolve.NET.Core
+namespace Evolve.NET.Core;
+
+public class GeneticAlgorithm<T>
 {
-    public class GeneticAlgorithm<T>
+    public DebugMask DebugMask { get; set; }
+    public ISelection<T>? Selection { get; set; }
+    public ICrossover<T>? Crossover { get; set; }
+    public IMutation<T>? Mutation { get; set; }
+    public IFitness<T>? Fitness { get; set; }
+    public int Elitism { get; set; }
+    public IDebug<T>? Debug { get; set; }
+    public string? Filename { get; set; }
+    public int? Seed { get; set; }
+    public ISortFitnessComparer<T> Comparer { get; set; } = new SortFitnessMax<T>();
+    public IPopulation<T>? Population { get; private set; }
+
+    public void Simulate(int count, int length, int min, int max, int maxGeneration)
     {
-        private IPopulation<T> m_Population;
+        ArgumentOutOfRangeException.ThrowIfNegative(maxGeneration);
+        if (Elitism < 0 || Elitism > count) throw new ArgumentOutOfRangeException(nameof(Elitism));
+        if (Selection is null || Crossover is null || Mutation is null || Fitness is null || Comparer is null)
+            throw new InvalidOperationException("Selection, crossover, mutation, fitness and comparer must be configured.");
+        if (Seed.HasValue) RandomHelper.SetSeed(Seed.Value);
+        var population = new Population<T>(count, length, min, max, Comparer);
+        Population = population;
+        population.Evaluate(Fitness);
+        if (Filename is not null) population.Save(Filename, false);
+        if ((DebugMask & DebugMask.First) != 0) Debug?.Log(population);
 
-        public DebugMask DebugMask { get; set; }
-
-        public ISelection<T> Selection { get; set; }
-
-        public ICrossover<T> Crossover { get; set; }
-
-        public IMutation<T> Mutation { get; set; }
-
-        public IFitness<T> Fitness { get; set; }
-
-        public int Elitism { get; set; }
-
-        public IDebug<T> Debug { get; set; }
-
-        public string Filename { get; set; }
-
-        public GeneticAlgorithm()
+        while (population.Generation < maxGeneration)
         {
-            DebugMask = DebugMask.None;
-        }
-
-        public void Simulate(int count, int length, int min, int max, int maxGeneration)
-        {
-            m_Population = new Population<T>(count, length, min, max);
-            m_Population.Evaluate(Fitness);
-
-            m_Population.Save(Filename, false);
-            if (Debug != null && (DebugMask & DebugMask.First) != 0)
-                Debug.Log(m_Population);
-
-            while (m_Population.Generation < maxGeneration)
+            population.Elite(Elitism);
+            while (!population.IsFullNewGeneration)
             {
-                m_Population.Elite(Elitism);
-
-                do
-                {
-                    IChromosome<T> parent1 = Selection.Select(m_Population);
-                    IChromosome<T> parent2 = Selection.Select(m_Population);
-
-                    IChromosome<T> offspring1, offspring2;
-                    Crossover.Crossover(parent1, parent2, out offspring1, out offspring2);
-
-                    Mutation.Mutate(ref offspring1, min, max);
-                    Mutation.Mutate(ref offspring2, min, max);
-
-                    m_Population.AddChromosomeInNewPopulation(offspring1);
-                    m_Population.AddChromosomeInNewPopulation(offspring2);
-
-                } while (!m_Population.IsFullNewGeneration);
-
-                m_Population.SwapGeneration();
-                m_Population.Evaluate(Fitness);
-
-                m_Population.Save(Filename, true);
-                if (Debug != null && (DebugMask & DebugMask.Step) != 0)
-                    Debug.Log(m_Population);
+                var parent1 = Selection.Select(population);
+                var parent2 = Selection.Select(population);
+                Crossover.Crossover(parent1, parent2, out var offspring1, out var offspring2);
+                Mutation.Mutate(ref offspring1, min, max);
+                Mutation.Mutate(ref offspring2, min, max);
+                offspring1.Comparer = Comparer;
+                offspring2.Comparer = Comparer;
+                population.AddChromosomeInNewPopulation(offspring1);
+                population.AddChromosomeInNewPopulation(offspring2);
             }
-
-            if (Debug != null && (DebugMask & DebugMask.Last) != 0)
-                Debug.Log(m_Population);
+            population.SwapGeneration();
+            population.Evaluate(Fitness);
+            if (Filename is not null) population.Save(Filename, true);
+            if ((DebugMask & DebugMask.Step) != 0) Debug?.Log(population);
         }
+        if ((DebugMask & DebugMask.Last) != 0) Debug?.Log(population);
     }
 }
